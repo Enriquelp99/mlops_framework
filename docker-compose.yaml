@@ -1,0 +1,35 @@
+services:
+  spark-master:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+    ports:
+      - "7077:7077"  # Puerto del master
+      - "8080:8080"  # Interfaz web del master
+    environment:
+      - SPARK_HOME=/opt/spark
+    command: >
+      /bin/bash -c "/opt/spark/sbin/start-master.sh && tail -f /opt/spark/logs/*"
+    volumes:
+      - spark-master-logs:/opt/spark/logs
+      - ./src:/tmp/src
+      - ./worker.py:/tmp/worker.py
+
+  spark-worker:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+    ports:
+      - "8081:8081"  # Interfaz web del worker
+    environment:
+      - SPARK_HOME=/opt/spark
+    command: >
+      /bin/bash -c "/opt/spark/sbin/start-worker.sh spark://spark-master:7077 && tail -f /opt/spark/logs/*"
+    volumes:
+      - spark-worker-logs:/opt/spark/logs  # Persistir logs del worker
+      - ./src:/tmp/src
+      - ./worker.py:/tmp/worker.py
+
+volumes:
+  spark-master-logs:
+  spark-worker-logs:
