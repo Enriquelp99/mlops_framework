@@ -1,4 +1,10 @@
-## Unreleased
+## 3.1.0 (2025-03-06)
+
+### Feat
+
+- **docker-compose**: Include new containers (jupyter notebooks and pgadmin to management postgres)
+
+## 3.0.0 (2025-03-06)
 
 ### Feat
 
