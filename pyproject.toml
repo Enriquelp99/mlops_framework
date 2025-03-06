@@ -1,0 +1,20 @@
+[tool.poetry]
+name = "spark-docker"
+version = "0.1.0"
+description = "Plantilla Aplicación de PySpark"
+authors = ["Enrique Liébana <enrique.liepe.1999@gmail.com>"]
+license = "MIT"
+readme = "README.md"  # Opcional, si tienes un archivo README
+
+[tool.poetry.dependencies]
+python = "^3.8"  # Especifica la versión de Python necesaria
+pyspark = "^3.5.3"  # Dependencia de PySpark
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.commitizen]
+name = "cz_conventional_commits"
+version = "3.0.0"
+tag_name = "v$VERSION"  # Tag format
