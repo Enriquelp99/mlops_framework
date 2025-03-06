@@ -58,12 +58,12 @@ docker-compose logs <nombre_del_servicio>
 ```   
 
 Acceder a los Servicios
-Spark Master: http://localhost:8080
-Spark Worker: http://localhost:8081
-MLflow: http://localhost:8000
-Minio: http://localhost:9000 (Consola: http://localhost:9001)
-Jupyter: http://127.0.0.1:8888/lab
-PgAdmin: http://localhost:8082/browser/
+- Spark Master: http://localhost:8080
+- Spark Worker: http://localhost:8081
+- MLflow: http://localhost:8000
+- Minio: http://localhost:9000 (Consola: http://localhost:9001)
+- Jupyter: http://127.0.0.1:8888/lab
+- PgAdmin: http://localhost:8082/browser/
 
 ### Minio
 Para acceder a Minio, utiliza las siguientes credenciales:
