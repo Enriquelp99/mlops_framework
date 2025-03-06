@@ -8,6 +8,8 @@ Este proyecto proporciona un entorno completo de MLOps utilizando Docker Compose
 - **Spark Worker**: Servicio trabajador de Apache Spark.
 - **MLflow**: Plataforma de gestión del ciclo de vida de modelos de machine learning.
 - **PostgreSQL**: Base de datos para almacenar los metadatos de MLflow.
+- **PgAdmin**: Herramienta de administración de bases de datos para PostgreSQL.
+- **Jupyter**: Entorno de desarrollo interactivo conectada con los servicios de SPARK.
 - **Minio**: Almacenamiento de objetos compatible con S3.
 - **Minio Create Bucket**: Servicio para crear un bucket en Minio.
 
@@ -60,8 +62,33 @@ Spark Master: http://localhost:8080
 Spark Worker: http://localhost:8081
 MLflow: http://localhost:8000
 Minio: http://localhost:9000 (Consola: http://localhost:9001)
+Jupyter: http://127.0.0.1:8888/lab
+PgAdmin: http://localhost:8082/browser/
 
-Ejecutar el Script de Aplicación
+### Minio
+Para acceder a Minio, utiliza las siguientes credenciales:
+
+- user: `minio_user`
+- password: `minio_password`
+
+### PgAdmin
+Para acceder a PgAdmin, utiliza las siguientes credenciales:
+
+- email: `admin@example.com`
+- password: `admin`
+
+### PostgreSQL
+Para acceder a PostgreSQL, utiliza las siguientes credenciales:
+
+- host: `postgres`
+- port: `5432`
+- user: `user`
+- password: `password`
+- database: `mlflowdb`
+
+Para poder acceder a Postgres necesitarás iniciar sesión en PgAdmin y añadir un nuevo servidor con las credenciales anteriores.
+
+## Ejecutar el Script de Aplicación
 Para ejecutar el script de aplicación, asegúrate de que todos los servicios estén en funcionamiento y luego ejecuta:
 
 ```sh
@@ -77,7 +104,7 @@ spark-submit worker.py
 ## Estructura del Proyecto
 
 .
-├── [docker-compose.yaml](http://_vscodecontentref_/2)
+├── [docker-compose.yaml](http://_vscodecontentref_/6)
 ├── docker
 │   └── Dockerfile
 ├── mlflow
@@ -85,9 +112,12 @@ spark-submit worker.py
 ├── src
 │   ├── app.py
 │   └── requirements.txt
+│── notebooks
+│   ├── Untitled.py
 └── infra
     ├── postgres-data
     └── minio-data
+    └── pgadmin-data
 
 ## Notas
 Asegúrate de que los servicios de MLflow y Minio estén completamente operativos antes de ejecutar el script de aplicación.

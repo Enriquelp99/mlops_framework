@@ -25,10 +25,6 @@ services:
     command: >
       /bin/bash -c "
       /opt/spark/sbin/start-master.sh &&
-      echo 'Esperando a que los servicios estén listos...' &&
-      sleep 10 &&
-      nc -zv mlflow 8000 &&
-      nc -zv minio 9000 &&
       tail -f /opt/spark/logs/*
       "
     volumes:
@@ -61,17 +57,12 @@ services:
     command: >
       /bin/bash -c "
       /opt/spark/sbin/start-worker.sh spark://spark-master:7077 &&
-      echo 'Esperando a que los servicios estén listos...' &&
-      sleep 10 &&
-      nc -zv mlflow 8000 &&
-      nc -zv minio 9000 &&
       tail -f /opt/spark/logs/*
       "
     volumes:
       - spark-worker-logs:/opt/spark/logs  # Persistir logs del worker
       - ./src:/tmp/src
       - ./worker.py:/tmp/worker.py
-
   mlflow:
     build:
       context: .
@@ -95,7 +86,6 @@ services:
       interval: 30s
       timeout: 10s
       retries: 5
-
   postgres:
     image: postgres:latest
     environment:
@@ -111,7 +101,6 @@ services:
       interval: 30s
       timeout: 10s
       retries: 5
-
   minio:
     image: minio/minio
     expose:
@@ -130,7 +119,6 @@ services:
     volumes:
     - ./infra/minio-data:/data
     command: server /data --console-address ":9001"
-    
 
   minio-create-bucket:
     image: minio/mc
@@ -146,6 +134,31 @@ services:
         echo 'bucket already exists'
       fi
       "
+  jupyter:
+    image: jupyter/pyspark-notebook
+    container_name: jupyter
+    environment:
+      - JUPYTER_ENABLE_LAB=yes
+      - SPARK_MASTER=spark://spark-master:7077  # Enlazamos Jupyter con el Spark Master
+    ports:
+      - "8888:8888"  # Puerto para acceder al Jupyter Lab
+    volumes:
+      - ./notebooks:/home/jovyan/work  # Volumen para almacenar los notebooks en tu máquina
+    depends_on:
+      - spark-master
+      - spark-worker
+  pgadmin:
+    image: dpage/pgadmin4
+    container_name: pgadmin
+    environment:
+      - PGADMIN_DEFAULT_EMAIL=admin@example.com
+      - PGADMIN_DEFAULT_PASSWORD=admin
+    ports:
+      - "8082:80"  # Puerto para acceder a la interfaz web de pgAdmin
+    volumes:
+      - ./infra/pgadmin-data:/var/lib/pgadmin
+    depends_on:
+      - postgres
 volumes:
   spark-master-logs:
   spark-worker-logs:

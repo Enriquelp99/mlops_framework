@@ -31,8 +31,6 @@ RUN curl -O https://apache.root.lu/spark/spark-3.4.1/spark-3.4.1-bin-hadoop3.tgz
 
 RUN chmod -R 755 /opt/spark
 
-RUN apt-get update && apt-get install -y netcat-openbsd
-
 COPY ../src /tmp/src
 COPY ../worker.py /tmp/worker.py
 
