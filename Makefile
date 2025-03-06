@@ -1,7 +1,7 @@
 # Makefile
 
 # Nombre del servicio en el docker-compose
-SERVICE_NAME = spark-docker-spark-master-1
+SERVICE_NAME = mlops_framework-spark-master-1
 
 # Comando para levantar los servicios
 up:
