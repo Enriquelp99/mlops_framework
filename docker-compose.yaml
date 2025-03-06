@@ -3,33 +3,151 @@ services:
     build:
       context: .
       dockerfile: docker/Dockerfile
+    platform: linux/amd64
     ports:
       - "7077:7077"  # Puerto del master
       - "8080:8080"  # Interfaz web del master
     environment:
       - SPARK_HOME=/opt/spark
+      - MLFLOW_BACKEND=postgresql
+      - MLFLOW_TRACKING_URI=postgresql://user:password@postgres:5432/mlflowdb
+      - MLFLOW_EXPERIMENT_NAME="default"
+      - MLFLOW_ARTIFACT_ROOT=s3://bucket
+      - AWS_ACCESS_KEY_ID=minio_user
+      - AWS_SECRET_ACCESS_KEY=minio_password
+      - AWS_REGION=us-east-1
+      - AWS_ENDPOINT_URL=http://minio:9000
+    depends_on:
+      mlflow:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
     command: >
-      /bin/bash -c "/opt/spark/sbin/start-master.sh && tail -f /opt/spark/logs/*"
+      /bin/bash -c "
+      /opt/spark/sbin/start-master.sh &&
+      echo 'Esperando a que los servicios estén listos...' &&
+      sleep 10 &&
+      nc -zv mlflow 8000 &&
+      nc -zv minio 9000 &&
+      tail -f /opt/spark/logs/*
+      "
     volumes:
       - spark-master-logs:/opt/spark/logs
       - ./src:/tmp/src
       - ./worker.py:/tmp/worker.py
-
+  
   spark-worker:
     build:
       context: .
       dockerfile: docker/Dockerfile
+    platform: linux/amd64
     ports:
       - "8081:8081"  # Interfaz web del worker
     environment:
       - SPARK_HOME=/opt/spark
+      - MLFLOW_BACKEND=postgresql
+      - MLFLOW_TRACKING_URI=postgresql://user:password@postgres:5432/mlflowdb
+      - MLFLOW_EXPERIMENT_NAME="default"
+      - MLFLOW_ARTIFACT_ROOT=s3://bucket
+      - AWS_ACCESS_KEY_ID=minio_user
+      - AWS_SECRET_ACCESS_KEY=minio_password
+      - AWS_REGION=us-east-1
+      - AWS_ENDPOINT_URL=http://minio:9000
+    depends_on:
+      mlflow:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
     command: >
-      /bin/bash -c "/opt/spark/sbin/start-worker.sh spark://spark-master:7077 && tail -f /opt/spark/logs/*"
+      /bin/bash -c "
+      /opt/spark/sbin/start-worker.sh spark://spark-master:7077 &&
+      echo 'Esperando a que los servicios estén listos...' &&
+      sleep 10 &&
+      nc -zv mlflow 8000 &&
+      nc -zv minio 9000 &&
+      tail -f /opt/spark/logs/*
+      "
     volumes:
       - spark-worker-logs:/opt/spark/logs  # Persistir logs del worker
       - ./src:/tmp/src
       - ./worker.py:/tmp/worker.py
 
+  mlflow:
+    build:
+      context: .
+      dockerfile: mlflow/Dockerfile
+    platform: linux/amd64
+    ports:
+      - "8000:8000"  # Puerto del master
+    environment:
+      - MLFLOW_BACKEND=postgresql
+      - MLFLOW_TRACKING_URI=postgresql://user:password@postgres:5432/mlflowdb
+      - MLFLOW_EXPERIMENT_NAME="default"
+      - MLFLOW_ARTIFACT_ROOT=s3://bucket
+      - AWS_ACCESS_KEY_ID=minio_user
+      - AWS_SECRET_ACCESS_KEY=minio_password
+      - AWS_REGION=us-east-1
+      - AWS_ENDPOINT_URL=http://minio:9000
+    volumes:
+      - ./src:/tmp/src
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  postgres:
+    image: postgres:latest
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: mlflowdb
+    ports:
+      - 5432:5432
+    volumes:
+      - ./infra/postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U user"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  minio:
+    image: minio/minio
+    expose:
+      - "9000"
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    environment:
+      MINIO_ROOT_USER: "minio_user"
+      MINIO_ROOT_PASSWORD: "minio_password"
+    healthcheck:
+      test: timeout 5s bash -c ':> /dev/tcp/127.0.0.1/9000' || exit 1
+      interval: 1s
+      timeout: 10s
+      retries: 5
+    volumes:
+    - ./infra/minio-data:/data
+    command: server /data --console-address ":9001"
+    
+
+  minio-create-bucket:
+    image: minio/mc
+    depends_on:
+      minio:
+        condition: service_healthy
+    entrypoint: >
+      bash -c "
+      mc alias set minio http://minio:9000 minio_user minio_password &&
+      if ! mc ls minio/bucket; then
+        mc mb minio/bucket
+      else
+        echo 'bucket already exists'
+      fi
+      "
 volumes:
   spark-master-logs:
   spark-worker-logs:
+  mlflow-logs:
+  
