@@ -23,14 +23,7 @@ services:
       minio:
         condition: service_healthy
     command: >
-      /bin/bash -c "
-      /opt/spark/sbin/start-master.sh &&
-      echo 'Esperando a que los servicios estén listos...' &&
-      sleep 10 &&
-      nc -zv mlflow 8000 &&
-      nc -zv minio 9000 &&
-      tail -f /opt/spark/logs/*
-      "
+      /bin/bash -c "/opt/spark/sbin/start-master.sh && tail -f /opt/spark/logs/*"
     volumes:
       - spark-master-logs:/opt/spark/logs
       - ./src:/tmp/src
@@ -59,14 +52,7 @@ services:
       minio:
         condition: service_healthy
     command: >
-      /bin/bash -c "
-      /opt/spark/sbin/start-worker.sh spark://spark-master:7077 &&
-      echo 'Esperando a que los servicios estén listos...' &&
-      sleep 10 &&
-      nc -zv mlflow 8000 &&
-      nc -zv minio 9000 &&
-      tail -f /opt/spark/logs/*
-      "
+      /bin/bash -c "/opt/spark/sbin/start-worker.sh spark://spark-master:7077 && tail -f /opt/spark/logs/*"
     volumes:
       - spark-worker-logs:/opt/spark/logs  # Persistir logs del worker
       - ./src:/tmp/src
